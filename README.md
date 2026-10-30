@@ -19,6 +19,31 @@ Frontend and command-post UI for CESAROPS SAR incident management.
 2. **[docs/RUST_CRATES.md](docs/RUST_CRATES.md)** — recommended crates by layer
 3. **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — stack choice and boundaries
 
-## Status
+## Run the application
 
-Planning repo only — no application code yet. Scaffold `apps/` and `crates/` when Phase 1 starts.
+Web test build:
+
+```sh
+cd apps/web
+npm install
+npm run dev
+```
+
+Desktop build (requires the Tauri 2 prerequisites):
+
+```sh
+cd apps/tauri/src-tauri
+cargo tauri dev
+```
+
+The same TypeScript UI runs at `/adminpanel/` as a web application. In a
+browser it uses an offline local store; in Tauri it uses the embedded SQLite
+database through typed commands.
+
+## Implemented
+
+- SAR intake, mission dashboard, updates/clues, team roster, and stakeholder reports
+- Offline SQLite schema and case JSON export
+- Live drift/detection GeoJSON overlays on the mission map
+- Truth-gated HTML and PDF report generation
+- Tauri 2 desktop shell plus Vite web deployment

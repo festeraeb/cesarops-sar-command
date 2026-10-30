@@ -1,0 +1,13 @@
+[package]
+name = "command-reports"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+chrono.workspace = true
+printpdf = "0.7"
+sar-family-report = { path = "../sar-family-report" }
+serde.workspace = true
+tera = "1"
+thiserror.workspace = true
