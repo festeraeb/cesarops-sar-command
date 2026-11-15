@@ -1,0 +1,30 @@
+{
+ "_note": "demo-synthetic: made-up geometry to exercise sar-coverage end to end; not a real search",
+ "segments": "segments.geojson",
+ "cell_m": 5,
+ "wind": {
+  "from_deg": 315,
+  "speed_ms": 3.0
+ },
+ "knobs": {},
+ "resources": [
+  {
+   "id": "k9-air",
+   "kind": "k9_air_scent",
+   "label": "air-scent dog",
+   "track": "k9_air.gpx"
+  },
+  {
+   "id": "k9-trail",
+   "kind": "k9_trailing",
+   "label": "trailing dog",
+   "track": "k9_trail.gpx"
+  },
+  {
+   "id": "drone-1",
+   "kind": "drone",
+   "label": "drone 50 m nadir",
+   "track": "drone.SRT"
+  }
+ ]
+}
