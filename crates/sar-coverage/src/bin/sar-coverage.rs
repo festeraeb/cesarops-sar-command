@@ -4,7 +4,9 @@
 //!        "knobs": {...overrides per kind...},
 //!        "resources": [{"id": "k9-mack", "kind": "k9_air_scent", "label": "Mack (air-scent)",
 //!                        "track": "mack.gpx", "knobs": {}}, {"id": "drone-1", "kind": "drone", "track": "DJI_0001.SRT"}]}
-//! Kinds: drone, k9_air_scent, k9_trailing, k9_tracking, foot. Track paths are relative to the plan.
+//! Kinds: drone, k9_air_scent, k9_trailing, k9_tracking, foot, line_search, side_scan, diver.
+//! Each resource has "track" (GPX/KML/CSV/DJI .SRT; SonarSniffer's track.kml for side_scan) or
+//! "pattern" (circular | jackstay | lawnmower | expanding_square; see pattern.rs). Paths are relative to the plan.
 //! OUT: coverage_cells.geojson, segments.geojson, summary.json (per-segment POD/POA, trail evidence,
 //!      the knobs used). Default knobs are placeholders until calibrated: summary says so.
 
@@ -30,9 +32,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut resources = Vec::new();
     for r in plan["resources"].as_array().ok_or("plan needs resources")? {
         let kind: Kind = serde_json::from_value(r["kind"].clone())?;
-        let tp = base.join(r["track"].as_str().ok_or("resource needs track")?);
-        let pts = track::read_track(&tp)?;
-        eprintln!("{}: {} points from {}", r["id"].as_str().unwrap_or("?"), pts.len(), tp.display());
+        // a recorded track, or a search pattern (dive teams on a rope, planned drone legs)
+        let pts = if let Some(t) = r["track"].as_str() {
+            let tp = base.join(t);
+            let pts = track::read_track(&tp)?;
+            eprintln!("{}: {} points from {}", r["id"].as_str().unwrap_or("?"), pts.len(), tp.display());
+            pts
+        } else if !r["pattern"].is_null() {
+            let pat: sar_coverage::pattern::Pattern = serde_json::from_value(r["pattern"].clone())?;
+            let pts = sar_coverage::pattern::to_track(&pat, r["alt_agl"].as_f64());
+            eprintln!("{}: {} points from a {} pattern", r["id"].as_str().unwrap_or("?"), pts.len(), r["pattern"]["type"].as_str().unwrap_or("?"));
+            pts
+        } else {
+            return Err("resource needs track or pattern".into());
+        };
         resources.push(Resource {
             id: r["id"].as_str().unwrap_or("resource").to_string(),
             kind,

@@ -15,7 +15,13 @@
 //!   likely offset UPWIND of where the dog works; a corridor shifted upwind.
 //! - K9 tracking: follows the footstep track itself; a narrow corridor on the path.
 //! - Foot searcher: a corridor of the sweep width.
+//! - Ground line search: a team abreast; corridor = searchers x spacing, POD from the spacing.
+//! - Side-scan sonar boat: a swath both sides of the track out to the range, minus the blind gap under
+//!   the boat; POD falls from near to far range.
+//! - Dive team: a corridor set by underwater visibility, from a surface-float GPS track or from the
+//!   search pattern itself (circular rope search, jackstay; see `pattern`).
 
+pub mod pattern;
 pub mod track;
 
 use serde::{Deserialize, Serialize};
@@ -117,6 +123,9 @@ pub enum Kind {
     K9Trailing,
     K9Tracking,
     Foot,
+    LineSearch,
+    SideScan,
+    Diver,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -143,7 +152,10 @@ pub fn default_knobs() -> Value {
                          "calm_below_ms": 0.5, "strong_above_ms": 6.0, "no_wind_radius_m": 30.0},
         "k9_trailing": {"half_width_m": 15.0, "upwind_offset_m": 10.0, "pod": 0.6},
         "k9_tracking": {"half_width_m": 3.0, "pod": 0.7},
-        "foot": {"half_width_m": 10.0, "pod": 0.5}
+        "foot": {"half_width_m": 10.0, "pod": 0.5},
+        "line_search": {"searchers": 6.0, "spacing_m": 5.0, "pod_at_1m": 0.9, "pod_halving_m": 10.0},
+        "side_scan": {"range_m": 50.0, "nadir_gap_m": 5.0, "pod_near": 0.9, "pod_far": 0.5},
+        "diver": {"visibility_m": 2.0, "width_per_visibility": 1.0, "pod": 0.7}
     })
 }
 
@@ -154,6 +166,9 @@ fn kind_key(k: Kind) -> &'static str {
         Kind::K9Trailing => "k9_trailing",
         Kind::K9Tracking => "k9_tracking",
         Kind::Foot => "foot",
+        Kind::LineSearch => "line_search",
+        Kind::SideScan => "side_scan",
+        Kind::Diver => "diver",
     }
 }
 
@@ -304,10 +319,43 @@ fn sweep(g: &Grid, r: &Resource, k: &Value, wind: Option<Wind>) -> Vec<f32> {
                 }
             }
         }
-        Kind::K9Trailing | Kind::K9Tracking | Kind::Foot => {
+        Kind::SideScan => {
+            // swath perpendicular to the direction of travel, both sides, minus the blind gap below
+            let (range, gap) = (knob(k, "range_m", 50.0), knob(k, "nadir_gap_m", 5.0));
+            let (pn, pf) = (knob(k, "pod_near", 0.9), knob(k, "pod_far", 0.5));
+            for i in 0..pts.len() {
+                let (x, y, _) = &pts[i];
+                let (j0, j1) = (i.saturating_sub(1), (i + 1).min(pts.len() - 1));
+                let (hx, hy) = (pts[j1].0 - pts[j0].0, pts[j1].1 - pts[j0].1);
+                let hl = (hx * hx + hy * hy).sqrt();
+                if hl < 1e-6 {
+                    continue; // stopped: no heading, no swath
+                }
+                let (fx, fy) = (hx / hl, hy / hl);
+                let rr = range + g.cell;
+                for (ix, iy) in g.cells_in(x - rr, y - rr, x + rr, y + rr) {
+                    let (cx, cy) = g.center(ix, iy);
+                    let (dx, dy) = (cx - x, cy - y);
+                    let along = (dx * fx + dy * fy).abs();
+                    let across = (dx * fy - dy * fx).abs();
+                    if along <= step && across >= gap && across <= range {
+                        let f = ((across - gap) / (range - gap).max(1e-6)).clamp(0.0, 1.0);
+                        pass_set(&mut pass, g.nx, ix, iy, pn + (pf - pn) * f);
+                    }
+                }
+            }
+        }
+        Kind::K9Trailing | Kind::K9Tracking | Kind::Foot | Kind::LineSearch | Kind::Diver => {
             let (hw, pod, offset) = match r.kind {
                 Kind::K9Trailing => (knob(k, "half_width_m", 15.0), knob(k, "pod", 0.6), knob(k, "upwind_offset_m", 10.0)),
                 Kind::K9Tracking => (knob(k, "half_width_m", 3.0), knob(k, "pod", 0.7), 0.0),
+                Kind::LineSearch => {
+                    // a team abreast: width = searchers x spacing; tighter spacing finds more
+                    let (n, sp) = (knob(k, "searchers", 6.0), knob(k, "spacing_m", 5.0));
+                    let pod = knob(k, "pod_at_1m", 0.9) * 0.5f64.powf((sp - 1.0).max(0.0) / knob(k, "pod_halving_m", 10.0));
+                    (n * sp / 2.0, pod, 0.0)
+                }
+                Kind::Diver => (knob(k, "visibility_m", 2.0) * knob(k, "width_per_visibility", 1.0), knob(k, "pod", 0.7), 0.0),
                 _ => (knob(k, "half_width_m", 10.0), knob(k, "pod", 0.5), 0.0),
             };
             // trailing: the person's path is likely upwind of where the dog works the drifted scent
@@ -568,6 +616,40 @@ mod tests {
         assert!((sa.poa_before - 0.5).abs() < 1e-9);
         assert!(sa.poa_after < sa.poa_before && sb.poa_after > sb.poa_before);
         assert!((sa.poa_after + sb.poa_after - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn side_scan_covers_both_sides_but_not_under_the_boat() {
+        let seg = vec![square("A", 42.0, -86.0, 120.0)];
+        let boat = Resource { id: "ss".into(), kind: Kind::SideScan, label: String::new(), track: line(42.0, -86.002, -85.998, 30), knobs: json!({"range_m": 40.0, "nadir_gap_m": 6.0}) };
+        let c = compute(&seg, &[boat], &json!({}), None, 2.0);
+        let g = &c.grid;
+        let (_, yl) = g.proj.fwd(42.0, -86.0);
+        let iy = ((yl - g.y0) / g.cell) as usize;
+        let ix = g.nx / 2;
+        assert_eq!(g.pod(ix, iy), 0.0, "blind gap under the boat");
+        assert!(g.pod(ix, iy + 10) > 0.0 && g.pod(ix, iy - 10) > 0.0, "both sides at ~20 m");
+        assert_eq!(g.pod(ix, iy + 25), 0.0, "beyond the 40 m range");
+        assert!(g.pod(ix, iy + 5) > g.pod(ix, iy + 18), "near range beats far range");
+    }
+
+    #[test]
+    fn dive_circular_pattern_and_line_search() {
+        let seg = vec![square("A", 43.0, -87.0, 30.0)];
+        let rings = pattern::to_track(&pattern::Pattern::Circular { center: (43.0, -87.0), step_m: 2.0, radius_max_m: 20.0, radius_start_m: 0.0 }, None);
+        let dive = Resource { id: "dive".into(), kind: Kind::Diver, label: String::new(), track: rings, knobs: json!({"visibility_m": 1.5}) };
+        let c = compute(&seg, &[dive], &json!({}), None, 1.0);
+        let g = &c.grid;
+        let (x, y) = g.proj.fwd(43.0, -87.0);
+        let (ix, iy) = (((x - g.x0) / g.cell) as usize, ((y - g.y0) / g.cell) as usize);
+        assert!(g.pod(ix + 10, iy) > 0.0, "inside the rope circle");
+        assert_eq!(g.pod(ix + 25, iy), 0.0, "outside the max radius + visibility");
+        let tight = Resource { id: "t".into(), kind: Kind::LineSearch, label: String::new(), track: line(43.0, -87.0005, -86.9995, 10), knobs: json!({"spacing_m": 2.0}) };
+        let loose = Resource { id: "l".into(), kind: Kind::LineSearch, label: String::new(), track: line(43.0, -87.0005, -86.9995, 10), knobs: json!({"spacing_m": 15.0}) };
+        let a = compute(&seg, &[tight], &json!({}), None, 1.0);
+        let b = compute(&seg, &[loose], &json!({}), None, 1.0);
+        let (pa, pb) = (a.grid.pod(a.grid.nx / 2, a.grid.ny / 2), b.grid.pod(b.grid.nx / 2, b.grid.ny / 2));
+        assert!(pa > pb, "tight spacing {pa} > loose {pb}");
     }
 
     #[test]
