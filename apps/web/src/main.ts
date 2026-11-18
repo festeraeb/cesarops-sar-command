@@ -6,8 +6,8 @@ import markerShadow from "leaflet/dist/images/marker-shadow.png";
 L.Icon.Default.mergeOptions({ iconUrl: markerIcon, iconRetinaUrl: markerIcon2x, shadowUrl: markerShadow });
 import {
   addLog, createCase, exportCaseJson, exportReportPdf, getCase, listCases, saveTeamMember,
-  initBridge, resetDemo,
-  type AppConfig, type CaseRecord, type Contact, type ModuleInfo,
+  initBridge, resetDemo, trainingAction,
+  type AppConfig, type Attachment, type CaseRecord, type Contact, type ModuleInfo,
 } from "./bridge";
 
 type Tab = "dashboard" | "intake" | "map" | "updates" | "teams" | "reports" | "modules" | "sonarsniffer";
@@ -64,16 +64,18 @@ function shell(content: string) {
       <div class="brand">CESARops · FIELD COMMAND UNIT</div>
       <span class="status">${esc(env.label)}${env.config.user ? ` · signed in as ${esc(env.config.user)}` : ""}</span>
       ${env.config.mode === "demo" ? `<button class="secondary" id="reset-demo">Reset demo</button>` : ""}
+      ${env.config.training ? `<button class="secondary" id="train-load">Load training cases (fictitious)</button><button class="secondary" id="train-delete">Delete training cases</button>` : ""}
       <label class="case-picker">Active case
         <select id="case-select">
           <option value="">No case selected</option>
-          ${cases.map((item) => `<option value="${esc(item.id)}" ${item.id === current?.id ? "selected" : ""}>${esc(item.mission_id)} · ${esc(item.subject_name)}</option>`).join("")}
+          ${cases.map((item) => `<option value="${esc(item.id)}" ${item.id === current?.id ? "selected" : ""}>${item.training ? "[TRAINING] " : ""}${esc(item.mission_id)} · ${esc(item.subject_name)}</option>`).join("")}
         </select>
       </label>
     </header>
     ${env.config.banner ? `<div class="banner">${esc(env.config.banner)}</div>` : ""}
     <nav class="tabs">${visibleTabs().map((item) => `<button data-tab="${item.id}" class="${tab === item.id ? "active" : ""}">${item.label}</button>`).join("")}</nav>
     <main>
+      ${current?.training ? `<div class="fict-strip" id="fict-strip">FICTITIOUS - training data. Every person, number and address in this case is made up.</div>` : ""}
       ${notice ? `<div class="notice">${esc(notice)}</div>` : ""}
       ${error ? `<div class="notice error">${esc(error)}</div>` : ""}
       ${content}
@@ -83,6 +85,21 @@ function shell(content: string) {
   document.querySelector<HTMLButtonElement>("#reset-demo")?.addEventListener("click", async () => {
     try { await resetDemo(); current = undefined; await refresh(); setMessage("Demo reset to the made-up starting incidents."); } catch (cause) { setMessage(String(cause), true); }
     tab = "dashboard"; render();
+  });
+  document.querySelector<HTMLButtonElement>("#train-load")?.addEventListener("click", async () => {
+    try {
+      const r = await trainingAction("load");
+      await refresh(); setMessage(`Training cases (fictitious): ${r.loaded} loaded, ${r.skipped} already there. ${r.in_store} of ${r.in_set} are in your store.`);
+    } catch (cause) { setMessage(String(cause), true); }
+    render();
+  });
+  document.querySelector<HTMLButtonElement>("#train-delete")?.addEventListener("click", async () => {
+    if (!window.confirm("Delete all training cases (fictitious) from your store? Your own cases are not touched.")) return;
+    try {
+      const r = await trainingAction("delete");
+      current = undefined; await refresh(); setMessage(`Training cases deleted: ${r.deleted}. Your own cases were not touched.`);
+    } catch (cause) { setMessage(String(cause), true); }
+    render();
   });
   document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((button) => {
     button.onclick = () => { tab = button.dataset.tab as Tab; setMessage(""); render(); };
@@ -94,11 +111,66 @@ function shell(content: string) {
   };
 }
 
+const atts = (kind: string): Attachment[] => (current?.attachments ?? []).filter((a) => a.kind === kind);
+
+function sampleRunCard(a: Attachment) {
+  const b = a.body;
+  return `<article class="sample-run" data-sample-run>
+    <div class="sample-label">${esc(b.label)}</div>
+    <h3>${esc(a.title)}</h3>
+    <p class="status">${esc(b.processed_by)}</p>
+    <div class="sample-body">
+      ${b.image_url ? `<a href="${esc(b.report_url)}" target="_blank" rel="noopener"><img class="sample-img" src="${esc(b.image_url)}" alt="${esc(a.title)}"></a>` : ""}
+      <div>
+        <ul>
+          <li><b>Source:</b> ${esc(b.source)}</li>
+          <li><b>Licence:</b> ${esc(b.licence)}</li>
+          <li><b>Credit:</b> ${esc(b.credit)}</li>
+          ${(b.stats ?? []).map((x: string) => `<li>${esc(x)}</li>`).join("")}
+          <li><b>Place:</b> ${esc(b.place_note)}</li>
+        </ul>
+        <p><a class="secondary linkbtn" data-open-sample href="${esc(b.report_url)}" target="_blank" rel="noopener">Open the SonarSniffer report</a></p>
+      </div>
+    </div>
+  </article>`;
+}
+
+function simulatedCard(a: Attachment) {
+  return `<article class="simulated" data-simulated>
+    <div class="sim-banner">${esc(a.body.banner)}</div>
+    <h3>${esc(a.title)}</h3><p>${esc(a.body.text)}</p>
+  </article>`;
+}
+
+function samplesSection() {
+  const runs = atts("sample_run"), sims = atts("simulated");
+  if (!runs.length && !sims.length) return "";
+  return `<section class="panel samples"><h2>Samples</h2>
+    ${runs.map(sampleRunCard).join("")}
+    ${sims.length ? `<h3 style="margin-top:16px">Not real results</h3>${sims.map(simulatedCard).join("")}` : ""}
+  </section>`;
+}
+
+function contactsSection() {
+  if (!current?.contacts.length) return "";
+  return `<section><h2>Contacts</h2><table class="table"><tbody>${current.contacts.map((k) => `<tr><td>${esc(k.name)}</td><td>${esc(k.relationship)}</td><td>${esc(k.phone)}</td></tr>`).join("")}</tbody></table></section>`;
+}
+
+function startFilm() {
+  const f = env.config.start_film;
+  if (env.config.mode !== "demo" || !f) return "";
+  return `<section class="panel start-film" id="start-film">
+    <h2>Watch the walkthrough (about 2 minutes)</h2>
+    <video controls preload="metadata" poster="${esc(f.poster)}" src="${esc(f.url)}" id="walkthrough"></video>
+    <p class="status">${esc(f.caption)}</p>
+  </section>`;
+}
+
 function dashboard() {
   if (!current) return `<section class="panel empty"><h1>No active SAR case</h1><p>Start with a verified call intake.</p><button class="primary" id="start-intake">Create intake</button></section>`;
   const logs = [...current.updates, ...current.clues].sort((a, b) => b.time.localeCompare(a.time));
-  return `<section class="panel">
-    <h1>${esc(current.mission_id)} · ${esc(current.subject_name)}</h1>
+  return `${startFilm()}<section class="panel">
+    <h1>${esc(current.mission_id)} · ${esc(current.subject_name)} ${current.training ? `<span class="fict-tag">FICTITIOUS - training data</span>` : ""}</h1>
     <div class="grid three">
       <div class="metric"><strong>${esc(current.priority)}</strong><span>Priority</span></div>
       <div class="metric"><strong>${current.team_members.length}</strong><span>Assigned responders</span></div>
@@ -114,7 +186,8 @@ function dashboard() {
         ${logs.slice(0, 4).map((item) => `<article class="${item.kind}"><div class="meta">${esc(item.time)} · ${esc(item.role)}</div>${esc(item.text)}</article>`).join("") || `<div class="empty">No operational updates yet.</div>`}
       </div></section>
     </div>
-  </section>`;
+    <div class="grid" style="margin-top:14px">${contactsSection()}</div>
+  </section>${samplesSection()}`;
 }
 
 function intake() {
@@ -154,6 +227,7 @@ function mapView() {
       </form>
       <h3 style="margin-top:18px">Loaded</h3>
       <div class="layer-list">${overlays.map((item, index) => `<div class="layer-item"><span>●</span><span>${esc(item.name)}</span><button class="secondary" data-remove-layer="${index}">×</button></div>`).join("") || `<span class="status">No live layers loaded</span>`}</div>
+      ${atts("sample_run").length ? `<p class="status" style="margin-top:14px"><b>Blue box:</b> survey area of the attached real sample sonar run (${esc(atts("sample_run")[0].body.label)}).</p>` : ""}
       <p class="status" style="margin-top:18px">Clues: ${current.clues.filter((item) => item.lat != null).length} · LKP is amber.</p>
     </aside>
     <div id="map"></div>
@@ -203,7 +277,7 @@ function reportMarkup(reportType: string) {
   const title = reportType === "family" ? "Family Situation Report" : reportType === "team" ? "Operational Team Report" : "Incident Commander Report";
   return `<article><h1>${title}</h1><p><b>Case:</b> ${esc(current.mission_id)}</p><p><b>Generated:</b> ${esc(new Date().toISOString())}</p>
     <h2>Known situation</h2><p>Search for ${esc(current.subject_name)}. Priority: ${esc(current.priority)}. Last known position: ${current.lkp_lat?.toFixed(5)}, ${current.lkp_lon?.toFixed(5)}.</p>
-    ${reportType === "family" ? `<p>This report includes recorded operational facts only. Unconfirmed hypotheses are excluded.</p>` : `<h2>Resources</h2><ul>${current.team_members.map((member) => `<li>${esc(member.callsign)} — ${esc(member.role)} — ${esc(member.status)}</li>`).join("")}</ul>`}
+    ${current.training ? `<p class="fict-tag">FICTITIOUS - training data</p>` : ""}${reportType === "family" ? `${atts("family_report").map((a) => `<h2>${esc(a.title)}</h2><p>${esc(a.body.text)}</p>`).join("")}<p>This report includes recorded operational facts only. Unconfirmed hypotheses are excluded.</p>` : `<h2>Resources</h2><ul>${current.team_members.map((member) => `<li>${esc(member.callsign)} — ${esc(member.role)} — ${esc(member.status)}</li>`).join("")}</ul>`}
     <h2>Recorded activity</h2><ul>${logs.map((item) => `<li><b>${esc(item.time)}</b> — ${esc(item.text)} (${esc(item.role)})</li>`).join("") || "<li>No activity recorded.</li>"}</ul>
   </article>`;
 }
@@ -244,6 +318,8 @@ function sonarView() {
   return `<section class="panel"><h1>SonarSniffer</h1><p>${esc(info.description)}</p>
     ${info.functions.map((f) => `<div class="notice">${esc(f.name.replace(/_/g, " "))}: ${f.available ? "ready" : "not available yet"}</div>`).join("")}
     <ul>${info.transports.map((t) => `<li><b>${esc(t.kind)}</b> - ${esc(t.note)}</li>`).join("")}</ul>
+    <p class="status">Live runs from the FCU are not available yet. The sample runs below were processed by SonarSniffer on the CESARops server, not by this app.</p>
+    ${current ? atts("sample_run").map(sampleRunCard).join("") || `<p class="status">No sample run is attached to the active case.</p>` : ""}
     ${info.link ? `<p><a class="secondary linkbtn" href="${esc(info.link)}" target="_blank" rel="noopener">Open the SonarSniffer review site (separate login)</a></p>` : ""}
   </section>`;
 }
@@ -310,6 +386,12 @@ function initMap() {
   }
   current.clues.filter((item) => item.lat != null && item.lon != null).forEach((item) => {
     L.marker([item.lat!, item.lon!]).bindPopup(`<b>Clue</b><br>${esc(item.text)}<br><small>${esc(item.time)}</small>`).addTo(map!);
+  });
+  atts("sample_run").forEach((a) => {
+    const bb = a.body.bounds as [[number, number], [number, number]] | undefined;
+    if (!bb) return;
+    L.rectangle(bb, { color: "#38bdf8", weight: 2, fillOpacity: .25 }).bindPopup(`<b>${esc(a.body.label)}</b><br>${esc(a.title)}<br><small>${esc(a.body.credit)}</small>`).addTo(map!);
+    map!.fitBounds(L.latLngBounds(bb).extend(center as L.LatLngTuple).pad(1.5));
   });
   overlays.forEach((item) => item.layer.addTo(map!));
   document.querySelector<HTMLFormElement>("#layer-form")!.onsubmit = async (event) => {

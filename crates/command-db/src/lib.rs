@@ -7,6 +7,7 @@ use thiserror::Error;
 use uuid::Uuid;
 
 const MIGRATION_1: &str = include_str!("../migrations/001_initial.sql");
+const MIGRATION_2: &str = include_str!("../migrations/002_attachments.sql");
 
 #[derive(Debug, Error)]
 pub enum DbError {
@@ -125,6 +126,16 @@ pub struct TeamMember {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct Attachment {
+    pub id: String,
+    pub case_id: String,
+    pub kind: String,
+    pub title: String,
+    pub body: serde_json::Value,
+    pub created_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CaseExport {
     pub case: Case,
     pub subjects: Vec<Subject>,
@@ -133,6 +144,8 @@ pub struct CaseExport {
     pub clues: Vec<Clue>,
     pub updates: Vec<Update>,
     pub team_members: Vec<TeamMember>,
+    #[serde(default)]
+    pub attachments: Vec<Attachment>,
 }
 
 pub struct Database {
@@ -199,6 +212,59 @@ impl Database {
             "INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (1, ?1)",
             [Utc::now().to_rfc3339()],
         )?;
+        self.conn.execute_batch(MIGRATION_2)?;
+        self.conn.execute(
+            "INSERT OR IGNORE INTO schema_migrations(version, applied_at) VALUES (2, ?1)",
+            [Utc::now().to_rfc3339()],
+        )?;
+        Ok(())
+    }
+
+    pub fn add_attachment(
+        &mut self,
+        case_id: &str,
+        kind: &str,
+        title: &str,
+        body: &serde_json::Value,
+    ) -> Result<Attachment> {
+        let item = Attachment {
+            id: id(),
+            case_id: required(case_id, "case_id")?,
+            kind: required(kind, "attachment.kind")?,
+            title: required(title, "attachment.title")?,
+            body: body.clone(),
+            created_at: Utc::now().to_rfc3339(),
+        };
+        let tx = self.conn.transaction()?;
+        ensure_case(&tx, &item.case_id)?;
+        tx.execute(
+            "INSERT INTO attachments(id, case_id, kind, title, body_json, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![item.id, item.case_id, item.kind, item.title, serde_json::to_string(&item.body)?, item.created_at],
+        )?;
+        tx.commit()?;
+        Ok(item)
+    }
+
+    pub fn attachments(&self, case_id: &str) -> Result<Vec<Attachment>> {
+        let raw = query_simple(
+            &self.conn,
+            "SELECT id, case_id, kind, title, body_json, created_at FROM attachments WHERE case_id = ?1 ORDER BY rowid",
+            case_id,
+            |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?, r.get::<_, String>(2)?, r.get::<_, String>(3)?, r.get::<_, String>(4)?, r.get::<_, String>(5)?)),
+        )?;
+        raw.into_iter()
+            .map(|(id, case_id, kind, title, body, created_at)| {
+                Ok(Attachment { id, case_id, kind, title, body: serde_json::from_str(&body)?, created_at })
+            })
+            .collect()
+    }
+
+    /// Delete one case and everything hung on it (cascade).
+    pub fn delete_case(&mut self, case_id: &str) -> Result<()> {
+        let n = self.conn.execute("DELETE FROM cases WHERE id = ?1", [case_id])?;
+        if n == 0 {
+            return Err(DbError::NotFound(case_id.to_owned()));
+        }
         Ok(())
     }
 
@@ -454,6 +520,7 @@ impl Database {
             clues: self.clues(case_id)?,
             updates: self.updates(case_id)?,
             team_members: self.team_members(case_id)?,
+            attachments: self.attachments(case_id)?,
             case,
         })
     }

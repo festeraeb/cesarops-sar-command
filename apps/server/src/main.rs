@@ -15,6 +15,8 @@
 
 mod demo;
 
+use command_api::training;
+
 use axum::{
     extract::{DefaultBodyLimit, Path, State},
     http::{header, HeaderMap, HeaderValue, StatusCode},
@@ -60,6 +62,15 @@ struct Config {
     max_cases_per_session: usize,
     #[serde(default)]
     modules: Option<ModulesConfig>,
+    /// Demo: seed file (JSON) every new visitor session starts with. Falls back to the built-in incidents.
+    #[serde(default)]
+    demo_seed: Option<String>,
+    /// Tester: seed file behind the "Load training cases (fictitious)" action. Never loaded automatically.
+    #[serde(default)]
+    training_seed: Option<String>,
+    /// Demo: walkthrough film shown on the start screen {url, poster, caption}.
+    #[serde(default)]
+    start_film: Option<Value>,
 }
 fn default_header() -> String { "x-sar-user".into() }
 fn default_base() -> String { "/".into() }
@@ -72,6 +83,7 @@ type Db = Arc<Mutex<Database>>;
 
 struct App {
     cfg: Config,
+    seed: Option<training::Seed>,
     registry: Registry,
     /// tester: user -> store. demo: session id -> (store, last used)
     users: Mutex<HashMap<String, Db>>,
@@ -166,7 +178,15 @@ impl App {
         if s.len() >= self.cfg.max_sessions {
             return Err(fail(StatusCode::SERVICE_UNAVAILABLE, "demo is busy, try again in a few minutes"));
         }
-        let db = demo::seeded().map_err(|e| fail(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
+        let db = match &self.seed {
+            Some(seed) => (|| {
+                let mut d = Database::open_in_memory().map_err(|e| e.to_string())?;
+                training::apply(&mut d, seed)?;
+                Ok::<_, String>(d)
+            })(),
+            None => demo::seeded(),
+        }
+        .map_err(|e| fail(StatusCode::INTERNAL_SERVER_ERROR, &e))?;
         let db = Arc::new(Mutex::new(db));
         let id = uuid::Uuid::new_v4().to_string();
         s.insert(id.clone(), (db.clone(), now));
@@ -197,6 +217,8 @@ async fn config(State(app): State<Arc<App>>, h: HeaderMap) -> Response {
         "mode": app.cfg.mode,
         "banner": app.cfg.banner,
         "user": user,
+        "training": app.cfg.mode == "tester" && app.seed.is_some(),
+        "start_film": app.cfg.start_film,
     }))
     .into_response()
 }
@@ -252,6 +274,42 @@ async fn call(State(app): State<Arc<App>>, Path(cmd): Path<String>, h: HeaderMap
     resp
 }
 
+/// Tester only: status / load / delete of the fictitious training cases in the caller's own store.
+async fn training_action(State(app): State<Arc<App>>, Path(action): Path<String>, h: HeaderMap) -> Response {
+    if app.cfg.mode != "tester" {
+        return fail(StatusCode::NOT_FOUND, "not found");
+    }
+    let user = match app.tester(&h) {
+        Ok(u) => u,
+        Err(r) => return r,
+    };
+    if !app.rate_ok(&client_ip(&h)) {
+        return fail(StatusCode::TOO_MANY_REQUESTS, "too many requests, slow down");
+    }
+    let Some(seed) = &app.seed else {
+        return fail(StatusCode::NOT_FOUND, "no training set is configured");
+    };
+    let db = match app.user_db(&user) {
+        Ok(d) => d,
+        Err(e) => return fail(StatusCode::INTERNAL_SERVER_ERROR, &e),
+    };
+    let mut guard = db.lock().unwrap();
+    let r = match action.as_str() {
+        "status" => Ok(json!({})),
+        "load" => training::apply(&mut guard, seed).map(|(l, s)| json!({ "loaded": l, "skipped": s })),
+        "delete" => training::delete_training(&mut guard).map(|n| json!({ "deleted": n })),
+        _ => return fail(StatusCode::NOT_FOUND, "not found"),
+    };
+    match r {
+        Ok(mut v) => {
+            v["in_store"] = json!(training::count_training(&guard));
+            v["in_set"] = json!(seed.cases.len());
+            Json(v).into_response()
+        }
+        Err(e) => fail(StatusCode::BAD_REQUEST, &e),
+    }
+}
+
 async fn reset(State(app): State<Arc<App>>, h: HeaderMap) -> Response {
     if app.cfg.mode != "demo" {
         return fail(StatusCode::NOT_FOUND, "not found");
@@ -273,6 +331,17 @@ async fn reset(State(app): State<Arc<App>>, h: HeaderMap) -> Response {
 
 #[tokio::main]
 async fn main() {
+    let argv: Vec<String> = std::env::args().collect();
+    if argv.get(1).map(String::as_str) == Some("--build-training") {
+        // fcu-server --build-training SEED.json OUT.sqlite : a test database built from the training seed
+        let (seed_path, out) = (argv.get(2).expect("seed path"), argv.get(3).expect("output path"));
+        let seed = training::load_seed(seed_path).expect("seed");
+        let _ = std::fs::remove_file(out);
+        let mut db = Database::open(out).expect("open output");
+        let (l, _) = training::apply(&mut db, &seed).expect("apply");
+        eprintln!("built {out}: {l} fictitious training cases");
+        return;
+    }
     let path = std::env::args().nth(1).unwrap_or_else(|| {
         eprintln!("usage: fcu-server CONFIG.json");
         std::process::exit(2)
@@ -284,10 +353,13 @@ async fn main() {
     }
     let mcfg = cfg.modules.clone().unwrap_or_default();
     let registry = Registry::new(&mcfg).expect("modules config");
+    let seed_path = if cfg.mode == "demo" { cfg.demo_seed.clone() } else { cfg.training_seed.clone() };
+    let seed = seed_path.map(|p| training::load_seed(&p).expect("training seed"));
     let listen = cfg.listen.clone();
     let static_dir = cfg.static_dir.clone();
     let app = Arc::new(App {
         cfg,
+        seed,
         registry,
         users: Mutex::new(HashMap::new()),
         sessions: Mutex::new(HashMap::new()),
@@ -299,6 +371,7 @@ async fn main() {
         .route("/api/modules", get(modules))
         .route("/api/call/:cmd", post(call))
         .route("/api/reset", post(reset))
+        .route("/api/training/:action", post(training_action))
         .fallback_service(ServeDir::new(&static_dir).fallback(ServeFile::new(index)))
         .layer(DefaultBodyLimit::max(256 * 1024))
         .with_state(app);

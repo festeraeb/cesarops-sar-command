@@ -116,3 +116,24 @@ h2 { color: #0a1a22; }
 .module small { font-weight: 400; color: var(--muted); }
 .linkbtn { display: inline-block; text-decoration: none; padding: 12px 16px; }
 .shell { display: flex; flex-direction: column; } .shell main { flex: 1; }
+
+/* training / samples */
+.fict-strip { background: #3b2a06; border: 1px solid var(--amber); color: #ffe2a3; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; font-weight: 700; letter-spacing: .03em; }
+.fict-tag { display: inline-block; font-size: .7rem; vertical-align: middle; background: var(--amber); color: #17130c; border-radius: 4px; padding: 2px 8px; margin-left: 8px; letter-spacing: .04em; }
+.samples { margin-top: 14px; }
+.sample-run { border: 1px solid #2d6a8a; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #0c1a21; }
+.sample-label { display: inline-block; background: #1f6f9a; color: #fff; font-weight: 700; padding: 3px 10px; border-radius: 4px; font-size: .85rem; }
+.sample-body { display: grid; grid-template-columns: minmax(180px, 320px) 1fr; gap: 16px; align-items: start; }
+.sample-img { width: 100%; border-radius: 6px; border: 1px solid var(--line); background: #000; }
+.simulated { margin-bottom: 12px; border: 1px dashed #777; border-radius: 8px; padding: 0 0 10px; background: repeating-linear-gradient(45deg, #2a2a2a, #2a2a2a 12px, #222 12px, #222 24px); color: #bbb; }
+.simulated h3, .simulated p { padding: 0 12px; }
+.sim-banner { background: repeating-linear-gradient(45deg, #555, #555 14px, #3d3d3d 14px, #3d3d3d 28px); color: #fff; font-weight: 800; padding: 8px 12px; letter-spacing: .06em; border-radius: 8px 8px 0 0; margin-bottom: 8px; }
+.start-film { margin-bottom: 14px; }
+.start-film video { width: 100%; max-width: 960px; border-radius: 8px; background: #000; display: block; }
+.linkbtn { display: inline-block; text-decoration: none; }
+@media (max-width: 720px) { .sample-body { grid-template-columns: 1fr; } }
+.sample-run, .sample-run h3, .sample-run li, .sample-run p, .sample-run .status { color: #e6f2f7; }
+.sample-run b { color: #fff; }
+.sample-run .status { color: #a9c6d3; }
+.simulated, .simulated h3, .simulated p { color: #d4d4d4; }
+.sim-banner { color: #fff; }

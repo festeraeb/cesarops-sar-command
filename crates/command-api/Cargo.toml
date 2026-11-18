@@ -9,3 +9,4 @@ command-db = { path = "../command-db" }
 command-reports = { path = "../command-reports" }
 serde.workspace = true
 serde_json.workspace = true
+chrono.workspace = true

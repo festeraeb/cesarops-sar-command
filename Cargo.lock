@@ -479,6 +479,7 @@ dependencies = [
 name = "command-api"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "command-db",
  "command-reports",
  "serde",

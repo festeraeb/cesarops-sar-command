@@ -5,8 +5,9 @@
 //! MODULES (see `modules`) that register themselves and are enabled by config.
 
 pub mod modules;
+pub mod training;
 
-use command_db::{ContactInput, CreateCase, Database, SubjectInput};
+use command_db::{Attachment, ContactInput, CreateCase, Database, SubjectInput};
 use command_reports::{export_pdf, Audience, Kind, ReportRequest, Statement};
 use serde::{Deserialize, Serialize};
 
@@ -92,6 +93,10 @@ pub struct WebCase {
     pub updates: Vec<WebLog>,
     pub clues: Vec<WebLog>,
     pub team_members: Vec<WebTeamMember>,
+    /// True when the case carries the "FICTITIOUS - training data" marker.
+    pub training: bool,
+    /// Sample runs, simulated placeholders, prepared family message (see command-db migration 002).
+    pub attachments: Vec<Attachment>,
 }
 
 #[derive(Debug, Serialize)]
@@ -168,6 +173,8 @@ pub fn web_case(db: &Database, id: &str) -> Result<WebCase, String> {
                 kind: "clue",
             })
             .collect(),
+        training: export.attachments.iter().any(|a| a.kind == "training_marker"),
+        attachments: export.attachments,
         team_members: export
             .team_members
             .into_iter()

@@ -3,10 +3,21 @@
   "listen": "127.0.0.1:9292",
   "static_dir": "/data/fcu/dist",
   "base_path": "/sar-demo/",
-  "banner": "Field Command Unit - Demo: made-up incidents, nothing is saved.",
+  "banner": "Field Command Unit - Demo: fictitious training cases, nothing is saved.",
   "rate_per_min": 120,
   "max_sessions": 200,
   "session_ttl_min": 45,
   "max_cases_per_session": 10,
-  "modules": { "enabled": ["core-cases", "core-reports"] }
+  "modules": {
+    "enabled": [
+      "core-cases",
+      "core-reports"
+    ]
+  },
+  "demo_seed": "/data/fcu/training-seed.json",
+  "start_film": {
+    "url": "/sar-demo-samples/fcu-walkthrough-720.mp4?v=20261118d",
+    "poster": "/sar-demo-samples/fcu-walkthrough-720-poster.jpg?v=20261118d",
+    "caption": "Walkthrough (about 2 minutes, no sound): a training case, the map, a team dispatch, a real sample sonar run (location and source obscured) and the family report. Fictitious people and cases."
+  }
 }

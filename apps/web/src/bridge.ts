@@ -19,7 +19,13 @@ export type CaseRecord = {
   updates: LogItem[];
   clues: LogItem[];
   team_members: TeamMember[];
+  /** carries the "FICTITIOUS - training data" marker */
+  training?: boolean;
+  attachments?: Attachment[];
 };
+
+/** kinds: training_marker, sample_run, simulated, family_report */
+export type Attachment = { id: string; case_id: string; kind: string; title: string; body: Record<string, any>; created_at: string };
 
 export type Contact = { name: string; phone: string; relationship: string };
 export type LogItem = {
@@ -45,7 +51,8 @@ export type ModuleInfo = {
   id: string; name: string; version: string; kind: "core" | "external"; description: string;
   provides: string[]; transports: TransportInfo[]; functions: FunctionInfo[]; link?: string | null;
 };
-export type AppConfig = { product: string; mode: "tester" | "demo" | "desktop" | "browser"; banner: string; user?: string | null };
+export type StartFilm = { url: string; poster: string; caption: string };
+export type AppConfig = { product: string; mode: "tester" | "demo" | "desktop" | "browser"; banner: string; user?: string | null; training?: boolean; start_film?: StartFilm | null };
 
 type Transport = {
   name: "tauri" | "http" | "local";
@@ -148,6 +155,10 @@ export async function initBridge(): Promise<{ transport: Transport["name"]; labe
   return { transport: transport.name, label: transport.label, config, modules };
 }
 
+export type TrainingResult = { loaded?: number; skipped?: number; deleted?: number; in_store: number; in_set: number };
+/** Tester site only: load / delete the fictitious training cases in the caller's own store. */
+export const trainingAction = (action: "status" | "load" | "delete") =>
+  httpJson<TrainingResult>(apiUrl("training/" + action), { method: "POST" });
 export const resetDemo = () => httpJson<{ ok: boolean }>(apiUrl("reset"), { method: "POST" });
 const call = <T>(cmd: string, args: Record<string, unknown> = {}) => transport.call<T>(cmd, args);
 

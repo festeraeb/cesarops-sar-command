@@ -1,0 +1,783 @@
+{
+ "name": "CESARops Field Command Unit training set",
+ "version": 1,
+ "marker": "FICTITIOUS - training data",
+ "note": "Every person, case, phone number and address here is made up. Sample sonar runs are real recordings shared with permission or under open licences; one recording's location and source are obscured. They are proxy data and not results for these cases.",
+ "sample_runs": {
+  "deepvision-obscured": {
+   "title": "Side-scan survey, southern Lake Ontario (DeepVision recording, part of one pass)",
+   "label": "Real DeepVision data - location and source obscured",
+   "source": "Part of one DeepVision side-scan recording (91,011 pings), moved to this place and with its dates removed; processed by SonarSniffer 0.9.2 with detection and report",
+   "licence": "Shared for public demonstration only in part, with its real location and source obscured.",
+   "processed_by": "Processed by SonarSniffer on the CESARops server. The FCU does not run surveys yet.",
+   "place_note": "Placed in southern Lake Ontario, about 12 km off the Wayne County shore, 43.400-43.459 N, 77.150-77.072 W. This is NOT where the recording was made: the real location is hidden on purpose. The case around it is fictitious.",
+   "stats": [
+    "Mosaic area about 7.9 km2, track 19.8 km, swath 400 m, range 200 m per side",
+    "47 automatic detections listed in the report (unreviewed candidates, not findings)"
+   ],
+   "report_url": "/sar-demo-samples/deepvision-lake-ontario/report/index.html",
+   "image_url": "/sar-demo-samples/deepvision-lake-ontario/thumb.jpg",
+   "bounds": [
+    [
+     43.400001,
+     -77.15038
+    ],
+    [
+     43.459405,
+     -77.071721
+    ]
+   ],
+   "credit": "Processed by SonarSniffer on the CESARops server. The recording's source is not named."
+  },
+  "humminbird": {
+   "title": "Side-scan pass, Colorado River, Glen Canyon reach (Humminbird recording)",
+   "label": "Real sample run - proxy people and data",
+   "source": "Humminbird side-imaging test recording Test-Small-DS (PINGMapper project test data, github.com/CameronBodine/PINGMapper), 10,359 pings, processed by SonarSniffer 0.9.2 with detection and report",
+   "licence": "MIT (PINGMapper repository licence)",
+   "credit": "Test data: Cameron Bodine, PINGMapper (MIT). Processing: CESARops SonarSniffer.",
+   "processed_by": "Processed by SonarSniffer on the CESARops server. The FCU does not run surveys yet.",
+   "place_note": "Placed where the recording was made: Colorado River below Glen Canyon Dam near Page, Arizona, by the recording's own positions (36.877-36.879 N, 111.517-111.514 W). The case around it is fictitious.",
+   "stats": [
+    "Swath 59 m, track 297 m, covered area 0.018 km2",
+    "5 automatic detection candidates in the report (not findings)"
+   ],
+   "report_url": "/sar-demo-samples/humminbird-colorado-river/report/index.html",
+   "image_url": "/sar-demo-samples/humminbird-colorado-river/thumb.jpg",
+   "bounds": [
+    [
+     36.877349,
+     -111.516995
+    ],
+    [
+     36.878791,
+     -111.514268
+    ]
+   ]
+  },
+  "lowrance": {
+   "title": "Sonar recording from a lake in western Sweden (Lowrance SL2)",
+   "label": "Real sample run - proxy people and data",
+   "source": "Lowrance SL2 test recording kmpm_bigger.sl2 (github.com/kmpm/node-sl2format, test fixtures), 16,885 pings on a 2D sonar and a down-scan channel, processed by SonarSniffer 0.9.2 with detection and report",
+   "licence": "MIT (declared in the node-sl2format package.json)",
+   "credit": "Test data: Peter Magnusson (kmpm), node-sl2format (MIT). Processing: CESARops SonarSniffer.",
+   "processed_by": "Processed by SonarSniffer on the CESARops server. The FCU does not run surveys yet.",
+   "place_note": "Placed where the recording was made: western Sweden, 59.124-59.129 N, 12.370-12.380 E (the recording's own positions). The case around it is fictitious.",
+   "stats": [
+    "Conventional 2D sonar and down-scan, not a side-scan pair: the picture is a waterfall, there is no side-scan mosaic",
+    "150 automatic detection candidates in the report (unreviewed, not findings)"
+   ],
+   "report_url": "/sar-demo-samples/lowrance-sweden-lake/report/index.html",
+   "image_url": "/sar-demo-samples/lowrance-sweden-lake/thumb.jpg",
+   "bounds": [
+    [
+     59.12402,
+     12.36976
+    ],
+    [
+     59.129,
+     12.37955
+    ]
+   ]
+  }
+ },
+ "cases": [
+  {
+   "id": "TRN-LM-001",
+   "domain": "water",
+   "objective": "vessel_sar",
+   "priority": "critical",
+   "area": "Lake Michigan, off Sheboygan, Wisconsin",
+   "subject": {
+    "name": "Ima Lostboater",
+    "age": 34,
+    "clothing": "Bright yellow kayak, orange dry top, red helmet",
+    "medical": [
+     "none reported"
+    ]
+   },
+   "lkp": {
+    "lat": 43.7505,
+    "lon": -87.689,
+    "text": "Seen paddling about 1.5 nm off the Sheboygan breakwater by a charter captain",
+    "min_ago": 190
+   },
+   "contacts": [
+    {
+     "name": "Cory Ander (charter captain)",
+     "phone": "555-0110",
+     "relationship": "Reporting party - cory.ander@example.org"
+    },
+    {
+     "name": "Joy Fulnews (family liaison)",
+     "phone": "555-0111",
+     "relationship": "Family liaison - joy.fulnews@example.org"
+    },
+    {
+     "name": "Paige Turner (Incident Commander)",
+     "phone": "555-0112",
+     "relationship": "Incident Commander - paige.turner@example.org"
+    },
+    {
+     "name": "Marina Fish (marine unit lead)",
+     "phone": "555-0113",
+     "relationship": "Marine unit lead - marina.fish@example.org"
+    }
+   ],
+   "team": [
+    {
+     "callsign": "Marine 1",
+     "name": "Marina Fish",
+     "role": "Marine Unit Leader",
+     "status": "deployed"
+    },
+    {
+     "callsign": "Air 2",
+     "name": "Rex Cue",
+     "role": "Air Operations",
+     "status": "assigned"
+    },
+    {
+     "callsign": "Shore 4",
+     "name": "Skip Stone",
+     "role": "Shoreline Team Leader",
+     "status": "available"
+    }
+   ],
+   "updates": [
+    {
+     "role": "Incident Commander",
+     "text": "Wind SW 15 kt, waves 3 ft. Search area set at 4 nm around the LKP.",
+     "min_ago": 150
+    },
+    {
+     "role": "Marine Unit Leader",
+     "text": "Boat 1 on scene, running a creeping-line pattern north of the LKP.",
+     "min_ago": 90
+    },
+    {
+     "role": "Family Liaison",
+     "text": "Family briefed in plain words; they are waiting at the harbour cafe and have everything they need.",
+     "min_ago": 60
+    }
+   ],
+   "clues": [
+    {
+     "role": "Search team",
+     "text": "Empty paddle float spotted floating by Boat 1",
+     "lat": 43.781,
+     "lon": -87.655,
+     "min_ago": 70
+    },
+    {
+     "role": "Search team",
+     "text": "Orange dry-top glove found on the breakwater rocks",
+     "lat": 43.7502,
+     "lon": -87.6962,
+     "min_ago": 45
+    }
+   ],
+   "family_report": "Ima set out in a yellow kayak this morning and was last seen about a mile and a half off the Sheboygan breakwater. A boat crew and a helicopter crew are searching the area right now, and shore teams are checking the beaches. We found a paddle float this afternoon, which tells us where to look. We will call you at every update, even when there is nothing new. [FICTITIOUS - training data]"
+  },
+  {
+   "id": "TRN-LO-002",
+   "domain": "water",
+   "objective": "vessel_sar",
+   "priority": "high",
+   "area": "Southern Lake Ontario, open water off the Wayne County shore, New York (area of the obscured sample recording)",
+   "subject": {
+    "name": "Justin Case",
+    "age": 52,
+    "clothing": "Grey aluminium skiff, blue rain jacket",
+    "medical": [
+     "blood pressure medication"
+    ]
+   },
+   "lkp": {
+    "lat": 43.431,
+    "lon": -77.112,
+    "text": "Skiff last seen at anchor, fishing, by a passing charter deckhand",
+    "min_ago": 420
+   },
+   "contacts": [
+    {
+     "name": "Phil Harbor (charter deckhand)",
+     "phone": "555-0120",
+     "relationship": "Reporting party - phil.harbor@example.org"
+    },
+    {
+     "name": "Hope Springs (family liaison)",
+     "phone": "555-0121",
+     "relationship": "Family liaison - hope.springs@example.org"
+    },
+    {
+     "name": "Paige Turner (Incident Commander)",
+     "phone": "555-0122",
+     "relationship": "Incident Commander - paige.turner@example.org"
+    },
+    {
+     "name": "Sonny Dey (dive team lead)",
+     "phone": "555-0123",
+     "relationship": "Dive team lead - sonny.dey@example.org"
+    },
+    {
+     "name": "Sid Eways (side-scan operator)",
+     "phone": "555-0124",
+     "relationship": "Sonar team - sid.eways@example.org"
+    }
+   ],
+   "team": [
+    {
+     "callsign": "Marine 1",
+     "name": "Marina Fish",
+     "role": "Marine Unit Leader",
+     "status": "deployed"
+    },
+    {
+     "callsign": "Dive 2",
+     "name": "Sonny Dey",
+     "role": "Dive Team Leader",
+     "status": "assigned"
+    },
+    {
+     "callsign": "Sonar 6",
+     "name": "Sid Eways",
+     "role": "Side-scan operator",
+     "status": "assigned"
+    }
+   ],
+   "updates": [
+    {
+     "role": "Incident Commander",
+     "text": "Skiff reported overdue at dusk. Search box set around the last sighting; wind light, visibility good.",
+     "min_ago": 360
+    },
+    {
+     "role": "Marine Unit Leader",
+     "text": "Boat 1 completed two passes of the box with nothing seen on the surface.",
+     "min_ago": 240
+    },
+    {
+     "role": "Incident Commander",
+     "text": "Side-scan sweep of the LKP box requested. A real sample side-scan run is attached to this case as proxy data to practise reading a mosaic. It is not a search result for this case.",
+     "min_ago": 120
+    }
+   ],
+   "clues": [
+    {
+     "role": "Search team",
+     "text": "Grey fuel can recovered floating",
+     "lat": 43.4265,
+     "lon": -77.1195,
+     "min_ago": 180
+    }
+   ],
+   "family_report": "Justin's skiff was last seen anchored and fishing on Lake Ontario. Boat crews have searched the surface twice. The next step is a sonar sweep of the lake bed near that spot, and a dive team is on standby. The sonar picture in this training case comes from a different, real recording and is only there so teams can practise. We will keep you informed. [FICTITIOUS - training data]",
+   "sample_run": "deepvision-obscured",
+   "simulated": [
+    {
+     "title": "Drone thermal pass over the search box",
+     "text": "Placeholder only. We do not have drone thermal imagery for this area. A real module would show a warm-body overlay here. Nothing on this card is a result."
+    }
+   ]
+  },
+  {
+   "id": "TRN-LS-003",
+   "domain": "water",
+   "objective": "vessel_sar",
+   "priority": "medium",
+   "area": "Lake Superior, Apostle Islands, Wisconsin",
+   "subject": {
+    "name": "Rhoda Boat",
+    "age": 61,
+    "clothing": "White sloop 'Knot Today', green foul-weather gear",
+    "medical": []
+   },
+   "lkp": {
+    "lat": 46.905,
+    "lon": -90.65,
+    "text": "Last radio check near the Apostle Islands; vessel overdue by four hours",
+    "min_ago": 480
+   },
+   "contacts": [
+    {
+     "name": "Seymour Waves (harbour volunteer)",
+     "phone": "555-0130",
+     "relationship": "Reporting party - seymour.waves@example.org"
+    },
+    {
+     "name": "Merry Comfort (family liaison)",
+     "phone": "555-0131",
+     "relationship": "Family liaison - merry.comfort@example.org"
+    },
+    {
+     "name": "Paige Turner (Incident Commander)",
+     "phone": "555-0132",
+     "relationship": "Incident Commander - paige.turner@example.org"
+    },
+    {
+     "name": "Rex Cue (air operations lead)",
+     "phone": "555-0133",
+     "relationship": "Air operations lead - rex.cue@example.org"
+    }
+   ],
+   "team": [
+    {
+     "callsign": "Cutter 5",
+     "name": "Marina Fish",
+     "role": "Marine Unit Leader",
+     "status": "assigned"
+    },
+    {
+     "callsign": "Air 3",
+     "name": "Rex Cue",
+     "role": "Air Operations",
+     "status": "available"
+    }
+   ],
+   "updates": [
+    {
+     "role": "Watch Officer",
+     "text": "Overdue vessel report received; radio calls on channel 16 unanswered.",
+     "min_ago": 240
+    },
+    {
+     "role": "Incident Commander",
+     "text": "Fog bank over the outer islands. Air search waits for the ceiling to lift.",
+     "min_ago": 150
+    },
+    {
+     "role": "Watch Officer",
+     "text": "Sloop heard on a hand-held radio, weak, bearing east of Devils Island. Boat 5 tasked.",
+     "min_ago": 50
+    }
+   ],
+   "clues": [
+    {
+     "role": "Radio watch",
+     "text": "Weak hand-held transmission, 'engine fine, just fog'",
+     "lat": 46.93,
+     "lon": -90.56,
+     "min_ago": 50
+    }
+   ],
+   "family_report": "Rhoda's sloop is overdue after a day sail among the Apostle Islands. We heard a weak radio call from the boat saying the engine is fine and she is in fog. A cutter is on its way to that area and a helicopter will go up when the fog lifts. This looks like a slow, foggy trip home rather than an emergency, but we are treating it seriously. [FICTITIOUS - training data]"
+  },
+  {
+   "id": "TRN-MR-004",
+   "domain": "water",
+   "objective": "person_search",
+   "priority": "high",
+   "area": "Mississippi River near Winona, Minnesota",
+   "subject": {
+    "name": "Dee Tour",
+    "age": 47,
+    "clothing": "Red canoe, camouflage hat, no life jacket seen",
+    "medical": [
+     "diabetes"
+    ]
+   },
+   "lkp": {
+    "lat": 44.0521,
+    "lon": -91.6393,
+    "text": "Launched at a river ramp; did not return by dusk",
+    "min_ago": 320
+   },
+   "contacts": [
+    {
+     "name": "Lee Way (boat-ramp attendant)",
+     "phone": "555-0140",
+     "relationship": "Reporting party - lee.way@example.org"
+    },
+    {
+     "name": "Grace Notes (family liaison)",
+     "phone": "555-0141",
+     "relationship": "Family liaison - grace.notes@example.org"
+    },
+    {
+     "name": "Paige Turner (Incident Commander)",
+     "phone": "555-0142",
+     "relationship": "Incident Commander - paige.turner@example.org"
+    },
+    {
+     "name": "Rory Rivers (swiftwater team lead)",
+     "phone": "555-0143",
+     "relationship": "Swiftwater team lead - rory.rivers@example.org"
+    }
+   ],
+   "team": [
+    {
+     "callsign": "River 1",
+     "name": "Rory Rivers",
+     "role": "Shoreline Team Leader",
+     "status": "assigned"
+    },
+    {
+     "callsign": "K9 5",
+     "name": "Bo Sun",
+     "role": "Ground Search",
+     "status": "available"
+    },
+    {
+     "callsign": "Medic 7",
+     "name": "Doc Tor-Kind",
+     "role": "Medical Unit",
+     "status": "assigned"
+    }
+   ],
+   "updates": [
+    {
+     "role": "Incident Commander",
+     "text": "River stage rising; backwater sloughs prioritised for the shoreline teams.",
+     "min_ago": 200
+    },
+    {
+     "role": "Medical Unit",
+     "text": "Subject has diabetes; family confirms insulin was left in the car. Medical unit staged at the ramp.",
+     "min_ago": 150
+    },
+    {
+     "role": "Incident Commander",
+     "text": "Dee found cold, hungry and embarrassed on a sandbar island. Medic checking now.",
+     "min_ago": 20
+    }
+   ],
+   "clues": [
+    {
+     "role": "Search team",
+     "text": "Red canoe seen drifting empty near a sandbar",
+     "lat": 44.014,
+     "lon": -91.58,
+     "min_ago": 110
+    },
+    {
+     "role": "Search team",
+     "text": "Footprints and a small campfire on the sandbar island",
+     "lat": 44.0105,
+     "lon": -91.576,
+     "min_ago": 40
+    }
+   ],
+   "family_report": "Good news: Dee has been found on a sandbar island south of the ramp. Dee is cold and hungry but talking and walking, and a medic is with Dee now. The canoe drifted away, which is why Dee could not paddle back. A boat will bring Dee to the ramp where you can meet. [FICTITIOUS - training data]"
+  },
+  {
+   "id": "TRN-CR-005",
+   "domain": "water",
+   "objective": "person_search",
+   "priority": "medium",
+   "area": "Colorado River, Glen Canyon reach near Page, Arizona (area of the Humminbird sample recording)",
+   "subject": {
+    "name": "Al Most-Found",
+    "age": 39,
+    "clothing": "Inflatable raft, tan hat, blue dry bag",
+    "medical": []
+   },
+   "lkp": {
+    "lat": 36.878,
+    "lon": -111.516,
+    "text": "Raft seen drifting low in the river at the lunch beach; no one answering",
+    "min_ago": 300
+   },
+   "contacts": [
+    {
+     "name": "Penny Whistle (campground host)",
+     "phone": "555-0150",
+     "relationship": "Reporting party - penny.whistle@example.org"
+    },
+    {
+     "name": "Hope Springs (family liaison)",
+     "phone": "555-0151",
+     "relationship": "Family liaison - hope.springs@example.org"
+    },
+    {
+     "name": "Paige Turner (Incident Commander)",
+     "phone": "555-0152",
+     "relationship": "Incident Commander - paige.turner@example.org"
+    },
+    {
+     "name": "Sid Eways (side-scan operator)",
+     "phone": "555-0153",
+     "relationship": "Sonar team - sid.eways@example.org"
+    }
+   ],
+   "team": [
+    {
+     "callsign": "River 1",
+     "name": "Rory Rivers",
+     "role": "Shoreline Team Leader",
+     "status": "deployed"
+    },
+    {
+     "callsign": "Sonar 6",
+     "name": "Sid Eways",
+     "role": "Side-scan operator",
+     "status": "assigned"
+    }
+   ],
+   "updates": [
+    {
+     "role": "Incident Commander",
+     "text": "Raft recovered empty and deflating at the lunch beach. Shoreline walk started.",
+     "min_ago": 240
+    },
+    {
+     "role": "Incident Commander",
+     "text": "Request for a side-scan pass of the pool below the beach. A real sample side-scan run from this stretch of river is attached as proxy data for practice. It is not a result for this case.",
+     "min_ago": 120
+    }
+   ],
+   "clues": [
+    {
+     "role": "Shoreline team",
+     "text": "Blue dry bag on the east bank, zipped, dry inside",
+     "lat": 36.8795,
+     "lon": -111.514,
+     "min_ago": 180
+    }
+   ],
+   "family_report": "Al's raft was found at the river beach, but Al was not with it. Shoreline teams are walking both banks and a sonar team will look at the deeper pool nearby. Al is an experienced river hand who often walks off to take photographs, so there is reason for hope. We will call as soon as we know anything. [FICTITIOUS - training data]",
+   "sample_run": "humminbird",
+   "simulated": [
+    {
+     "title": "Lidar shoreline map",
+     "text": "Placeholder only. We do not have a lidar survey of this river bank. A real module would show terrain and overhangs here. Nothing on this card is a result."
+    }
+   ]
+  },
+  {
+   "id": "TRN-SE-006",
+   "domain": "water",
+   "objective": "person_search",
+   "priority": "low",
+   "area": "A lake in western Sweden (made-up visitor; area of the Lowrance sample recording)",
+   "subject": {
+    "name": "Sam Please",
+    "age": 29,
+    "clothing": "Green rowing boat, wool cap",
+    "medical": []
+   },
+   "lkp": {
+    "lat": 59.1265,
+    "lon": 12.375,
+    "text": "Rowing boat seen tied to a dock; owner's car still in the car park at nightfall",
+    "min_ago": 360
+   },
+   "contacts": [
+    {
+     "name": "Ulla Pontus (lake-cabin neighbour)",
+     "phone": "555-0160",
+     "relationship": "Reporting party - ulla.pontus@example.org"
+    },
+    {
+     "name": "Kay Sera (family liaison)",
+     "phone": "555-0161",
+     "relationship": "Family liaison - kay.sera@example.org"
+    },
+    {
+     "name": "Paige Turner (Incident Commander)",
+     "phone": "555-0162",
+     "relationship": "Incident Commander - paige.turner@example.org"
+    },
+    {
+     "name": "Wade Inn (shoreline team lead)",
+     "phone": "555-0163",
+     "relationship": "Shoreline team lead - wade.inn@example.org"
+    }
+   ],
+   "team": [
+    {
+     "callsign": "Shore 4",
+     "name": "Wade Inn",
+     "role": "Shoreline Team Leader",
+     "status": "deployed"
+    },
+    {
+     "callsign": "Sonar 6",
+     "name": "Sid Eways",
+     "role": "Side-scan operator",
+     "status": "available"
+    }
+   ],
+   "updates": [
+    {
+     "role": "Incident Commander",
+     "text": "Exercise scenario: a visitor has not come back from an evening row. Shoreline teams walk the lake edge.",
+     "min_ago": 300
+    },
+    {
+     "role": "Incident Commander",
+     "text": "Real sample side-scan from a lake in this area is attached as proxy data for practice. It is not a result for this case.",
+     "min_ago": 140
+    }
+   ],
+   "clues": [
+    {
+     "role": "Shoreline team",
+     "text": "Wool cap hanging on a jetty post",
+     "lat": 59.1272,
+     "lon": 12.3731,
+     "min_ago": 200
+    }
+   ],
+   "family_report": "Sam rowed out in the evening and has not come back yet. The boat is tied up, and Sam's cap was found on a jetty, so we are searching the shoreline first. A sonar scan of the lake bottom is available if we need it. We will keep you up to date. [FICTITIOUS - training data]",
+   "sample_run": "lowrance"
+  },
+  {
+   "id": "TRN-LE-007",
+   "domain": "water",
+   "objective": "vessel_sar",
+   "priority": "high",
+   "area": "Lake Erie, near Put-in-Bay, Ohio",
+   "subject": {
+    "name": "Mike Thetester",
+    "age": 27,
+    "clothing": "Red jet ski, black wetsuit, white life jacket",
+    "medical": [
+     "asthma"
+    ]
+   },
+   "lkp": {
+    "lat": 41.69,
+    "lon": -82.8,
+    "text": "Jet ski seen idling 2 nm north of the island ferry dock, rider waving",
+    "min_ago": 150
+   },
+   "contacts": [
+    {
+     "name": "Gil Ligan (angler)",
+     "phone": "555-0170",
+     "relationship": "Reporting party - gil.ligan@example.org"
+    },
+    {
+     "name": "Joy Fulnews (family liaison)",
+     "phone": "555-0171",
+     "relationship": "Family liaison - joy.fulnews@example.org"
+    },
+    {
+     "name": "Paige Turner (Incident Commander)",
+     "phone": "555-0172",
+     "relationship": "Incident Commander - paige.turner@example.org"
+    },
+    {
+     "name": "Marina Fish (marine unit lead)",
+     "phone": "555-0173",
+     "relationship": "Marine unit lead - marina.fish@example.org"
+    }
+   ],
+   "team": [
+    {
+     "callsign": "Marine 1",
+     "name": "Marina Fish",
+     "role": "Marine Unit Leader",
+     "status": "deployed"
+    },
+    {
+     "callsign": "Air 2",
+     "name": "Rex Cue",
+     "role": "Air Operations",
+     "status": "assigned"
+    }
+   ],
+   "updates": [
+    {
+     "role": "Incident Commander",
+     "text": "Waves building from the west, 4 ft. Small craft advisory.",
+     "min_ago": 120
+    },
+    {
+     "role": "Marine Unit Leader",
+     "text": "Boat 1 reached the jet ski, rider aboard, tired but fine; engine would not restart. Tow under way.",
+     "min_ago": 30
+    }
+   ],
+   "clues": [
+    {
+     "role": "Marine 1",
+     "text": "Jet ski located drifting, rider waving",
+     "lat": 41.702,
+     "lon": -82.782,
+     "min_ago": 35
+    }
+   ],
+   "family_report": "Mike's jet ski stopped working on the lake and he drifted in rising waves. A rescue boat has reached him and he is safe, tired, and being towed to shore. He asked us to tell you he is sorry about the missed dinner. [FICTITIOUS - training data]"
+  },
+  {
+   "id": "TRN-IL-008",
+   "domain": "water",
+   "objective": "person_search",
+   "priority": "medium",
+   "area": "Green Lake (inland lake), Wisconsin",
+   "subject": {
+    "name": "Hal Lifejacket",
+    "age": 55,
+    "clothing": "Stand-up paddleboard, striped shirt, lifejacket worn",
+    "medical": [
+     "none reported"
+    ]
+   },
+   "lkp": {
+    "lat": 43.8,
+    "lon": -88.96,
+    "text": "Paddleboard seen heading toward the far shore at dusk",
+    "min_ago": 240
+   },
+   "contacts": [
+    {
+     "name": "Barb Wire (marina clerk)",
+     "phone": "555-0180",
+     "relationship": "Reporting party - barb.wire@example.org"
+    },
+    {
+     "name": "Merry Comfort (family liaison)",
+     "phone": "555-0181",
+     "relationship": "Family liaison - merry.comfort@example.org"
+    },
+    {
+     "name": "Paige Turner (Incident Commander)",
+     "phone": "555-0182",
+     "relationship": "Incident Commander - paige.turner@example.org"
+    },
+    {
+     "name": "Skip Stone (shoreline team lead)",
+     "phone": "555-0183",
+     "relationship": "Shoreline team lead - skip.stone@example.org"
+    }
+   ],
+   "team": [
+    {
+     "callsign": "Shore 4",
+     "name": "Skip Stone",
+     "role": "Shoreline Team Leader",
+     "status": "deployed"
+    },
+    {
+     "callsign": "Marine 8",
+     "name": "Marina Fish",
+     "role": "Marine Unit Leader",
+     "status": "assigned"
+    }
+   ],
+   "updates": [
+    {
+     "role": "Incident Commander",
+     "text": "Lake calm, good visibility. Marine unit searches the far shore; shore teams cover the public beaches.",
+     "min_ago": 180
+    },
+    {
+     "role": "Marine Unit Leader",
+     "text": "Hal found sitting on the far dock with a flat paddleboard battery pump. He had no phone signal.",
+     "min_ago": 35
+    }
+   ],
+   "clues": [
+    {
+     "role": "Marine 8",
+     "text": "Board and paddler located at a private dock on the far shore",
+     "lat": 43.817,
+     "lon": -88.942,
+     "min_ago": 40
+    }
+   ],
+   "family_report": "Hal has been found safe on a dock on the far side of Green Lake. His board lost air and he had no phone signal, so he could not call. He is wearing his lifejacket, is warm, and is being brought back by boat. [FICTITIOUS - training data]"
+  }
+ ]
+}

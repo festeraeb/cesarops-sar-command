@@ -21,5 +21,6 @@
     "sonarsniffer": {
       "cloud_url": "https://cesarops.com/sonarsniffer/review/"
     }
-  }
+  },
+  "training_seed": "/data/fcu/training-seed.json"
 }
