@@ -1,0 +1,12 @@
+{
+  "mode": "demo",
+  "listen": "127.0.0.1:9292",
+  "static_dir": "/data/fcu/dist",
+  "base_path": "/sar-demo/",
+  "banner": "Field Command Unit - Demo: made-up incidents, nothing is saved.",
+  "rate_per_min": 120,
+  "max_sessions": 200,
+  "session_ttl_min": 45,
+  "max_cases_per_session": 10,
+  "modules": { "enabled": ["core-cases", "core-reports"] }
+}

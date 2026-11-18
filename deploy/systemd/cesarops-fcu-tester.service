@@ -1,0 +1,18 @@
+[Unit]
+Description=CESARops Field Command Unit - tester site (per-user case stores, behind the review-gate login)
+After=network.target
+[Service]
+User=cesarops
+ExecStart=/data/fcu/bin/fcu-server /data/fcu/tester/config.json
+Restart=always
+RestartSec=3
+MemoryMax=400M
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/data/fcu/tester/data
+IPAddressDeny=any
+IPAddressAllow=localhost
+[Install]
+WantedBy=multi-user.target

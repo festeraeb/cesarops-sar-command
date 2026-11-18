@@ -1,11 +1,20 @@
 import L, { type GeoJSON, type Map as LeafletMap } from "leaflet";
 import "./styles.css";
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+L.Icon.Default.mergeOptions({ iconUrl: markerIcon, iconRetinaUrl: markerIcon2x, shadowUrl: markerShadow });
 import {
   addLog, createCase, exportCaseJson, exportReportPdf, getCase, listCases, saveTeamMember,
-  type CaseRecord, type Contact,
+  initBridge, resetDemo,
+  type AppConfig, type CaseRecord, type Contact, type ModuleInfo,
 } from "./bridge";
 
-type Tab = "dashboard" | "intake" | "map" | "updates" | "teams" | "reports";
+type Tab = "dashboard" | "intake" | "map" | "updates" | "teams" | "reports" | "modules" | "sonarsniffer";
+let env: { transport: string; label: string; config: AppConfig; modules: ModuleInfo[] } = {
+  transport: "local", label: "", config: { product: "Field Command Unit", mode: "browser", banner: "" }, modules: [],
+};
+const enabled = (id: string) => env.modules.some((item) => item.id === id);
 const app = document.querySelector<HTMLDivElement>("#app")!;
 let cases: CaseRecord[] = [];
 let current: CaseRecord | undefined;
@@ -34,11 +43,14 @@ const setMessage = (text: string, isError = false) => {
   error = isError ? text : "";
 };
 
-const tabs: { id: Tab; label: string }[] = [
-  { id: "dashboard", label: "Mission" }, { id: "intake", label: "Intake" },
-  { id: "map", label: "Map" }, { id: "updates", label: "Updates & Clues" },
-  { id: "teams", label: "Teams" }, { id: "reports", label: "Reports" },
+// The UI shows only tabs whose module is enabled in the config file.
+const allTabs: { id: Tab; label: string; module: string }[] = [
+  { id: "dashboard", label: "Mission", module: "core-cases" }, { id: "intake", label: "Intake", module: "core-cases" },
+  { id: "map", label: "Map", module: "core-cases" }, { id: "updates", label: "Updates & Clues", module: "core-cases" },
+  { id: "teams", label: "Teams", module: "core-cases" }, { id: "reports", label: "Reports", module: "core-reports" },
+  { id: "sonarsniffer", label: "SonarSniffer", module: "sonarsniffer" }, { id: "modules", label: "Modules", module: "" },
 ];
+const visibleTabs = () => allTabs.filter((item) => !item.module || enabled(item.module));
 
 async function refresh(selectId?: string) {
   cases = await listCases();
@@ -49,8 +61,9 @@ async function refresh(selectId?: string) {
 function shell(content: string) {
   app.innerHTML = `<div class="shell">
     <header class="topbar">
-      <div class="brand">CESAROPS · SAR COMMAND</div>
-      <span class="status">${("__TAURI_INTERNALS__" in window) ? "Desktop · SQLite" : "Web · local offline store"}</span>
+      <div class="brand">CESARops · FIELD COMMAND UNIT</div>
+      <span class="status">${esc(env.label)}${env.config.user ? ` · signed in as ${esc(env.config.user)}` : ""}</span>
+      ${env.config.mode === "demo" ? `<button class="secondary" id="reset-demo">Reset demo</button>` : ""}
       <label class="case-picker">Active case
         <select id="case-select">
           <option value="">No case selected</option>
@@ -58,7 +71,8 @@ function shell(content: string) {
         </select>
       </label>
     </header>
-    <nav class="tabs">${tabs.map((item) => `<button data-tab="${item.id}" class="${tab === item.id ? "active" : ""}">${item.label}</button>`).join("")}</nav>
+    ${env.config.banner ? `<div class="banner">${esc(env.config.banner)}</div>` : ""}
+    <nav class="tabs">${visibleTabs().map((item) => `<button data-tab="${item.id}" class="${tab === item.id ? "active" : ""}">${item.label}</button>`).join("")}</nav>
     <main>
       ${notice ? `<div class="notice">${esc(notice)}</div>` : ""}
       ${error ? `<div class="notice error">${esc(error)}</div>` : ""}
@@ -66,6 +80,10 @@ function shell(content: string) {
     </main>
   </div>`;
 
+  document.querySelector<HTMLButtonElement>("#reset-demo")?.addEventListener("click", async () => {
+    try { await resetDemo(); current = undefined; await refresh(); setMessage("Demo reset to the made-up starting incidents."); } catch (cause) { setMessage(String(cause), true); }
+    tab = "dashboard"; render();
+  });
   document.querySelectorAll<HTMLButtonElement>("[data-tab]").forEach((button) => {
     button.onclick = () => { tab = button.dataset.tab as Tab; setMessage(""); render(); };
   });
@@ -207,9 +225,34 @@ function noCase(noun: string) {
   return `<section class="panel empty">Select or create a case before using ${noun}.</section>`;
 }
 
+function modulesView() {
+  const yn = (ok: boolean) => ok ? "ready" : "not available yet";
+  return `<section class="panel"><h1>Modules</h1>
+    <p class="status">Each capability is a module with an adapter. A team enables a module in the configuration file; only enabled modules appear here and in the tabs. A transport is <b>local</b> (offline on this machine) or <b>cloud</b> (over the network).</p>
+    ${env.modules.map((item) => `<article class="module">
+      <h2>${esc(item.name)} <small>${esc(item.id)} v${esc(item.version)} · ${esc(item.kind)}</small></h2>
+      <p>${esc(item.description)}</p>
+      <ul>${item.transports.map((t) => `<li><b>${esc(t.kind)}</b>: ${esc(yn(t.available))} - ${esc(t.note)}</li>`).join("")}
+      ${item.functions.map((f) => `<li>${esc(f.name)}: ${esc(yn(f.available))}</li>`).join("")}</ul>
+      ${item.provides.length ? `<p class="status">Provides: ${item.provides.map(esc).join(", ")}</p>` : ""}
+    </article>`).join("")}</section>`;
+}
+
+function sonarView() {
+  const info = env.modules.find((item) => item.id === "sonarsniffer");
+  if (!info) return noCase("SonarSniffer");
+  return `<section class="panel"><h1>SonarSniffer</h1><p>${esc(info.description)}</p>
+    ${info.functions.map((f) => `<div class="notice">${esc(f.name.replace(/_/g, " "))}: ${f.available ? "ready" : "not available yet"}</div>`).join("")}
+    <ul>${info.transports.map((t) => `<li><b>${esc(t.kind)}</b> - ${esc(t.note)}</li>`).join("")}</ul>
+    ${info.link ? `<p><a class="secondary linkbtn" href="${esc(info.link)}" target="_blank" rel="noopener">Open the SonarSniffer review site (separate login)</a></p>` : ""}
+  </section>`;
+}
+
 function render() {
   map?.remove(); map = undefined;
-  const views: Record<Tab, () => string> = { dashboard, intake, map: mapView, updates, teams, reports };
+  if (!visibleTabs().some((item) => item.id === tab)) tab = visibleTabs()[0]?.id ?? "modules";
+  document.title = "CESARops Field Command Unit";
+  const views: Record<Tab, () => string> = { dashboard, intake, map: mapView, updates, teams, reports, modules: modulesView, sonarsniffer: sonarView };
   shell(views[tab]());
   bind();
 }
@@ -229,7 +272,7 @@ function bind() {
         lkp_time: field(data, "lkp_time") ? new Date(field(data, "lkp_time")).toISOString() : undefined,
         contacts: contact.name || contact.phone ? [contact] : [],
       });
-      await refresh(record.id); tab = "dashboard"; setMessage(`Case ${record.mission_id} opened and saved offline.`); render();
+      await refresh(record.id); tab = "dashboard"; setMessage(`Case ${record.mission_id} opened and saved.`); render();
     } catch (cause) { setMessage(String(cause), true); render(); }
   });
   document.querySelector<HTMLFormElement>("#log-form")?.addEventListener("submit", async (event) => {
@@ -310,4 +353,4 @@ function bindReports() {
   });
 }
 
-refresh().then(render).catch((cause) => { setMessage(String(cause), true); render(); });
+initBridge().then((info) => { env = info; return refresh(); }).then(render).catch((cause) => { setMessage(String(cause), true); render(); });

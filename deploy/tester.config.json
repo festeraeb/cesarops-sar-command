@@ -1,0 +1,25 @@
+{
+  "mode": "tester",
+  "listen": "127.0.0.1:9291",
+  "static_dir": "/data/fcu/dist",
+  "data_dir": "/data/fcu/tester/data",
+  "user_header": "x-sar-user",
+  "allowed_users": [
+    "operator",
+    "jims",
+    "lukea"
+  ],
+  "base_path": "/sar-test/",
+  "banner": "Field Command Unit - TEST SITE. Your cases are private to your login and are kept between visits.",
+  "rate_per_min": 600,
+  "modules": {
+    "enabled": [
+      "core-cases",
+      "core-reports",
+      "sonarsniffer"
+    ],
+    "sonarsniffer": {
+      "cloud_url": "https://cesarops.com/sonarsniffer/review/"
+    }
+  }
+}

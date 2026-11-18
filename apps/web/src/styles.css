@@ -87,3 +87,32 @@ h2 { font-size: 1.1rem; color: var(--amber); }
   body, main, .panel { background: #fff; color: #111; border: 0; padding: 0; }
   .report-preview { padding: 0; }
 }
+
+/* Field use: light, high-contrast theme for sunlight; large touch targets. */
+:root {
+  color: #0a0f12; background: #ffffff;
+  --panel: #ffffff; --line: #1b2a30; --muted: #2b3c43; --amber: #a64b00; --danger: #b00020; --ok: #0a6b3b;
+}
+html { font-size: 18px; }
+.topbar { background: #0a1a22; color: #fff; border-bottom: 3px solid #000; }
+.topbar .status, .topbar label { color: #e8f0f2; }
+.brand { color: #ffd479; }
+.tabs { background: #e9eef0; border-bottom: 2px solid var(--line); }
+.tabs button, .secondary, .primary { color: #0a0f12; border: 2px solid var(--line); border-radius: 8px; min-height: 48px; padding: 10px 16px; background: #fff; }
+.tabs button.active, .primary { background: #0a1a22; color: #fff; border-color: #0a1a22; }
+.topbar .secondary { background: #fff; }
+input, select, textarea { color: #0a0f12; background: #fff; border: 2px solid var(--line); min-height: 48px; font-size: 1rem; }
+h2 { color: #0a1a22; }
+.notice { background: #fff3d6; border-left: 6px solid var(--amber); color: #0a0f12; }
+.notice.error { background: #ffe1e4; color: #5a0010; border-color: var(--danger); }
+.metric, .feed article, .layer-item, .checklist label { background: #f2f5f6; border-color: var(--line); color: #0a0f12; }
+.metric strong { color: #0a1a22; }
+.feed article { border-left: 5px solid #345; } .feed article.clue { border-color: var(--amber); }
+.panel { border: 2px solid var(--line); }
+.table th { color: var(--muted); }
+.empty { color: var(--muted); }
+.banner { background: #ffd479; color: #000; font-weight: 800; text-align: center; padding: 12px 16px; border-bottom: 3px solid #000; font-size: 1.05rem; }
+.module { border-top: 2px solid var(--line); padding-top: 10px; margin-top: 10px; }
+.module small { font-weight: 400; color: var(--muted); }
+.linkbtn { display: inline-block; text-decoration: none; padding: 12px 16px; }
+.shell { display: flex; flex-direction: column; } .shell main { flex: 1; }

@@ -47,3 +47,21 @@ database through typed commands.
 - Live drift/detection GeoJSON overlays on the mission map
 - Truth-gated HTML and PDF report generation
 - Tauri 2 desktop shell plus Vite web deployment
+
+## Field Command Unit web host (2026-11-18)
+
+`apps/server` (axum, crate `fcu-server`) exposes every Tauri command as `POST api/call/<cmd>` (same args object
+as `invoke`) and serves the built front end. Shared command logic lives in `crates/command-api`, called by both
+the Tauri shell and the web host. Capabilities are modules (`crates/command-api/src/modules.rs`): each registers
+id, name, version and what it provides, and is reached through an adapter with a local (offline) or cloud (HTTP)
+transport. A team enables modules in the config file (`"modules": {"enabled": [...]}`); the UI shows only
+enabled modules. Anything not working is shown as "not available yet" (SonarSniffer today).
+
+```sh
+cd apps/web && npm install && npm run build           # front end (relative base, works under any path)
+cargo build --release -p fcu-server
+fcu-server deploy/demo.config.json                    # public demo: in-memory sessions, made-up incidents
+fcu-server deploy/tester.config.json                  # testers: per-user SQLite stores, user from X-Sar-User
+```
+
+`deploy/` holds the configs, systemd units and nginx snippet used at cesarops.com/sar-demo/ and /sar-test/.

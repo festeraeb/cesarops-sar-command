@@ -9,6 +9,8 @@ members = [
     "crates/command-geo",
     "crates/command-reports",
     "crates/sar-coverage",
+    "crates/command-api",
+    "apps/server",
     "apps/tauri/src-tauri",
 ]
 
